@@ -159,7 +159,7 @@ class carddav extends rcube_plugin
 			SELECT
 				*
 			FROM
-				".get_table_name('carddav_server')."
+				".$rcmail->db->table_name('carddav_server')."
 			WHERE
 				user_id = ?
 			".($carddav_server_id !== false ? " AND carddav_server_id = ?" : null)."
@@ -362,23 +362,17 @@ class carddav extends rcube_plugin
 
 		$query = "
 			SELECT
-				*
+				count(*)
 			FROM
-				".get_table_name('carddav_server')."
+				".$rcmail->db->table_name('carddav_server')."
 			WHERE
 				user_id = ?
 		";
 
 		$result = $rcmail->db->query($query, $user_id);
 
-		if ($rcmail->db->num_rows($result))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		$count = $rcmail->db->fetch_array($result);
+        return ($count[0] > 0);
 	}
 
 	/**
@@ -571,7 +565,7 @@ class carddav extends rcube_plugin
 
 		$query = "
 			INSERT INTO
-				".get_table_name('carddav_server')." (user_id, url, username, password, label, read_only, default_server)
+				".$rcmail->db->table_name('carddav_server')." (user_id, url, username, password, label, read_only, default_server)
 			VALUES
 				(?, ?, ?, ?, ?, ?, ?)
 		";
@@ -648,7 +642,7 @@ class carddav extends rcube_plugin
 
 		$query = "
 			DELETE FROM
-				".get_table_name('carddav_server')."
+				".$rcmail->db->table_name('carddav_server')."
 			WHERE
 				user_id = ?
 			AND
@@ -702,6 +696,6 @@ class carddav extends rcube_plugin
 	 */
 	public function write_log($message)
 	{
-		write_log('CardDAV', 'v' . self::VERSION . ' | ' . $message);
+		rcmail::write_log('CardDAV', 'v' . self::VERSION . ' | ' . $message);
 	}
 }

@@ -143,7 +143,7 @@ class carddav_addressbook extends rcube_addressbook
 			SELECT
 				*
 			FROM
-				".get_table_name('carddav_contacts')."
+				".$rcmail->db->table_name('carddav_contacts')."
 			WHERE
 				user_id = ?
 			AND
@@ -162,12 +162,9 @@ class carddav_addressbook extends rcube_addressbook
 			$result = $rcmail->db->limitquery($query, $limit['start'], $limit['length'], $rcmail->user->data['user_id'], $this->carddav_server_id);
 		}
 
-		if ($rcmail->db->num_rows($result))
+        while ($contact = $rcmail->db->fetch_assoc($result))
 		{
-			while ($contact = $rcmail->db->fetch_assoc($result))
-			{
-				$carddav_addressbook_contacts[$contact['vcard_id']] = $contact;
-			}
+            $carddav_addressbook_contacts[$contact['vcard_id']] = $contact;
 		}
 
 		return $carddav_addressbook_contacts;
@@ -187,7 +184,7 @@ class carddav_addressbook extends rcube_addressbook
 			SELECT
 				*
 			FROM
-				".get_table_name('carddav_contacts')."
+				".$rcmail->db->table_name('carddav_contacts')."
 			WHERE
 				user_id = ?
 			AND
@@ -196,12 +193,7 @@ class carddav_addressbook extends rcube_addressbook
 
 		$result = $rcmail->db->query($query, $rcmail->user->data['user_id'], $carddav_contact_id);
 
-		if ($rcmail->db->num_rows($result))
-		{
-			return $rcmail->db->fetch_assoc($result);
-		}
-
-		return false;
+		return $rcmail->db->fetch_assoc($result);
 	}
 
 	/**
@@ -215,21 +207,19 @@ class carddav_addressbook extends rcube_addressbook
 
 		$query = "
 			SELECT
-				*
+				count(*)
 			FROM
-				".get_table_name('carddav_contacts')."
+				".$rcmail->db->table_name('carddav_contacts')."
 			WHERE
 				user_id = ?
 			AND
 				carddav_server_id = ?
-				".$this->get_search_set()."
-			ORDER BY
-				name ASC
-		";
+				".$this->get_search_set();
 
 		$result = $rcmail->db->query($query, $rcmail->user->data['user_id'], $this->carddav_server_id);
 
-		return $rcmail->db->num_rows($result);
+		$count = $rcmail->db->fetch_array($result);
+        return $count[0];
 	}
 
 	/**
@@ -503,7 +493,7 @@ class carddav_addressbook extends rcube_addressbook
 
 		$query = "
 			INSERT INTO
-				".get_table_name('carddav_contacts')." (carddav_server_id, user_id, etag, last_modified, vcard_id, vcard, words, firstname, surname, name, email)
+				".$rcmail->db->table_name('carddav_contacts')." (carddav_server_id, user_id, etag, last_modified, vcard_id, vcard, words, firstname, surname, name, email)
 			VALUES
 				(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		";
@@ -553,7 +543,7 @@ class carddav_addressbook extends rcube_addressbook
 
 		$query = "
 			UPDATE
-				".get_table_name('carddav_contacts')."
+				".$rcmail->db->table_name('carddav_contacts')."
 			SET
 				etag = ?,
 				last_modified = ?,
@@ -610,7 +600,7 @@ class carddav_addressbook extends rcube_addressbook
 
 		$query = "
 			DELETE FROM
-				".get_table_name('carddav_contacts')."
+				".$rcmail->db->table_name('carddav_contacts')."
 			WHERE
 				vcard_id = ?
 			AND
@@ -649,9 +639,9 @@ class carddav_addressbook extends rcube_addressbook
 			$vcard_id = $carddav_backend->add($vcard);
 			if($vcard_id !== false)
 			{
-                $this->carddav_addressbook_sync($server, false, $vcard_id);
+                $this->carddav_addressbook_sync($server, null, $vcard_id);
 
-                return $rcmail->db->insert_id(get_table_name('carddav_contacts'));
+                return $rcmail->db->insert_id($rcmail->db->table_name('carddav_contacts'));
             }
 		}
 
@@ -820,7 +810,7 @@ class carddav_addressbook extends rcube_addressbook
 			SELECT
 				*
 			FROM
-				".get_table_name('carddav_contacts')."
+				".$rcmail->db->table_name('carddav_contacts')."
 			WHERE
 				user_id = ?
 			".$this->get_search_set()."
@@ -830,16 +820,12 @@ class carddav_addressbook extends rcube_addressbook
 
 		$result = $rcmail->db->query($query, $rcmail->user->data['user_id']);
 
-		if ($rcmail->db->num_rows($result))
+        while ($contact = $rcmail->db->fetch_assoc($result))
 		{
-			while ($contact = $rcmail->db->fetch_assoc($result))
-			{
-				$record['name'] = $contact['name'];
-				$record['email'] = explode(', ', $contact['email']);
+            $record['name'] = $contact['name'];
+			$record['email'] = explode(', ', $contact['email']);
 
-				$this->result->add($record);
-			}
-
+			$this->result->add($record);
 		}
 
 		return $this->result;
